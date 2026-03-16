@@ -1,8 +1,8 @@
-from src.preprocessing import preprocess_text
+from src.preprocessing import preprocess_keep_capitals
 
 def boolean_search(query: str, index: dict):
     """Simple Boolean search using inverted index"""
-    query_tokens = preprocess_text(query)
+    query_tokens = preprocess_keep_capitals(query)
     if not query_tokens:
         return []
     results = set(index.get(query_tokens[0], []))

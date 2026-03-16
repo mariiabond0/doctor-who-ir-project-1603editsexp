@@ -1,14 +1,13 @@
 import nltk
 from nltk.tokenize import word_tokenize
 import string
+import pandas as pd
 
 nltk.download('punkt', quiet=True)
 
-def preprocess_text(text: str):
-    """Lowercase, remove punctuation, tokenize"""
-    if not text:
+def preprocess_keep_capitals(text):
+    if pd.isna(text) or not text:
         return []
-    text = text.lower()
-    text = text.translate(str.maketrans('', '', string.punctuation))
     tokens = word_tokenize(text)
-    return [t for t in tokens if t.strip()]
+    tokens = [t for t in tokens if t.strip() and t not in string.punctuation]
+    return tokens

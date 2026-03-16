@@ -3,11 +3,12 @@ import json
 from src.search import boolean_search
 from src.bm_25 import build_bm25_corpus, bm25_search
 from src.semantic import encode_corpus, semantic_search
+import pandas as pd
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(PROJECT_ROOT, "dw_data")
-CORPUS_PATH = os.path.join(DATA_DIR, "document_corpus_dw.json")
-INDEX_PATH = os.path.join(DATA_DIR, "inverted_index.json")
+DW_DATA = os.path.join(PROJECT_ROOT, "dw_data")
+CORPUS_PATH = os.path.join(DW_DATA, "document_corpus_dw.json")
+INDEX_PATH = os.path.join(DW_DATA, "inverted_index.json")
 
 with open(CORPUS_PATH, "r", encoding="utf-8") as f:
     document_corpus = json.load(f)
@@ -72,3 +73,17 @@ def semantic_query(q):
 evaluate_method("Boolean Search", boolean_query)
 evaluate_method("BM25 Search", bm25_query)
 evaluate_method("Semantic Search", semantic_query)
+
+st_correct_list = []
+
+for i, query in enumerate(queries):
+    results = semantic_query(query)
+    st_correct_list.append(len(set(results) & set(answers[i])))
+
+df = pd.read_csv("dw_data/search_results_summary.csv")
+df["ST Correct"] = st_correct_list
+df.to_csv("dw_data/search_results_summary.csv", index=False)
+
+print(df)
+
+
