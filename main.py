@@ -1,9 +1,14 @@
 import os
 import json
-from src.search import boolean_search
-from src.bm_25 import build_bm25_corpus, bm25_search
-from src.semantic import encode_corpus, semantic_search
+from src.boolean_search import boolean_search, boolean_search_sqlite
+from src.bm_25 import build_bm25_corpus, build_bm25_corpus_sqlite, bm25_search, bm25_search_sqlite
+from src.sentence_transformers import encode_corpus, load_embeddings_from_db, semantic_search, semantic_search_sqlite
 import pandas as pd
+import sqlite3
+
+# Prepare database connection
+DB_PATH = "dw_data/doctor_who.db"
+conn = sqlite3.connect(DB_PATH)
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 DW_DATA = os.path.join(PROJECT_ROOT, "dw_data")
@@ -18,16 +23,16 @@ with open(INDEX_PATH, "r", encoding="utf-8") as f:
 
 # Queries and expected answers
 queries = [
-    "Fights with Weeping Angels and wants to save Amy",
-    "Clara in nineteenth century",
-    "Doctor meet River Song first time",
-    "Donna encounter Daleks and Davros",
-    "Rose end up in a parallel universe",
+    "Doctor fights with Weeping Angels and wants to save Amy",
+    "Doctor and Clara in nineteenth century",
+    "Doctor meets River Song for the first time",
+    "Doctor and Donna encounter Daleks and Davros",
+    "Doctor and Rose end up in a parallel universe",
     "Doctor meets van Gogh",
-    "Martha face time paradox creatures or similar threats",
-    "Bill encounter Cybermen",
+    "Doctor and Martha face time paradox creatures or similar threats",
+    "Doctor and Bill encounter Cybermen",
     "Paternoster Gang and Doctor and Vastra and Strax",
-    "Rose meets her father Pete Tyler"
+    "Doctor and Rose meets her father Pete Tyler"
 ]
 
 answers = [
@@ -44,46 +49,45 @@ answers = [
 ]
 
 # Prepare BM25 and Semantic embeddings
-texts, doc_ids = build_bm25_corpus(document_corpus)
-corpus_embeddings = encode_corpus(document_corpus)
+texts, doc_ids = build_bm25_corpus_sqlite(conn)
+corpus_embeddings = load_embeddings_from_db(conn)
 
 def evaluate_method(method_name, query_func):
     print(f"\n--- {method_name} ---")
     for i, query in enumerate(queries):
         results = query_func(query)
-        print(f"Query {i+1}: {query}")
-        print("Predicted:", results)
-        print("Expected: ", answers[i])
-        print("Overlap: ", len(set(results) & set(answers[i])), "/", len(answers[i]))
-        print("")
+        print(f"Query {i+1}: {len(set(results) & set(answers[i]))}/{len(answers[i])}")
 
 # Boolean search wrapper
 def boolean_query(q):
-    return boolean_search(q, inverted_index)
+    return boolean_search_sqlite(q, conn)
 
 # BM25 search wrapper
 def bm25_query(q):
-    return bm25_search(q, texts, doc_ids)
+    return bm25_search_sqlite(q, conn)
 
 # Semantic search wrapper
 def semantic_query(q):
-    return semantic_search(q, document_corpus, corpus_embeddings)
+    return semantic_search_sqlite(q, conn)
 
 # Run evaluation
 evaluate_method("Boolean Search", boolean_query)
 evaluate_method("BM25 Search", bm25_query)
 evaluate_method("Semantic Search", semantic_query)
 
-st_correct_list = []
+results_dict = {
+    "Boolean Correct": [],
+    "BM25 Correct": [],
+    "ST Correct": []
+}
 
 for i, query in enumerate(queries):
-    results = semantic_query(query)
-    st_correct_list.append(len(set(results) & set(answers[i])))
+    results_dict["Boolean Correct"].append(len(set(boolean_query(query)) & set(answers[i])))
+    results_dict["BM25 Correct"].append(len(set(bm25_query(query)) & set(answers[i])))
+    results_dict["ST Correct"].append(len(set(semantic_query(query)) & set(answers[i])))
 
 df = pd.read_csv("dw_data/search_results_summary.csv")
-df["ST Correct"] = st_correct_list
+for col, vals in results_dict.items():
+    df[col] = vals
+
 df.to_csv("dw_data/search_results_summary.csv", index=False)
-
-print(df)
-
-
