@@ -33,22 +33,28 @@ This project implements an information retrieval system based on the **Doctor Wh
 doctor-who-ir-project/
 │
 ├─ src/
-│   ├─ preprocessing.py       # Text preprocessing functions
-│   ├─ creating_corpus.py     # Build corpus, inverted index, embeddings, SQLite DB
-│   ├─ boolean_search.py      # Boolean search functions (JSON & SQLite)
+│   ├─ __init__.py
 │   ├─ bm_25.py               # BM25 functions (JSON & SQLite)
+│   ├─ boolean_search.py      # Boolean search functions (JSON & SQLite)
+│   ├─ creating_corpus.py     # Build corpus, inverted index, embeddings, SQLite DB
+│   ├─ preprocessing.py       # Text preprocessing functions
 │   ├─ sentence_transformers.py # Semantic search & embedding functions
 │
 ├─ dw_data/
 │   ├─ all-detailsepisodes.csv
-│   ├─ imdb_details.csv
-│   ├─ document_corpus_dw.json
-│   ├─ inverted_index.json
+│   ├─ all_scripts.csv
 │   ├─ doctor_who.db
+│   ├─ document_corpus_dw.json
+│   ├─ dwguide.csv
+│   ├─ first_example_10_queries.json
+│   ├─ imdb_details.csv
+│   ├─ inverted_index.json
+│   ├─ merged_dataset.csv
 │   └─ search_results_summary.csv
 │
 ├─ main.py                   # Run evaluation and query searches
-└─ README.md
+├─ README.md
+└─ requirements.txt
 ```
 
 ## Installation
